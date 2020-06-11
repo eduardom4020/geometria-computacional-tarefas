@@ -5,6 +5,7 @@
 #include <functional>
 #include <vector>
 #include <stdlib.h>
+#include <chrono>
 
 void printValues(std::string title, std::vector<int> array)
 {
@@ -125,6 +126,7 @@ std::vector<int> mergeSort(std::vector<int> array)
 int main(int argc, char const *argv[])
 {
     std::cout << "Homework 1: Sorting Algorithms" << std::endl;
+    bool showDetails = argc >= 2 && std::string(argv[1]) == "detailed";
 
     std::vector<int> sortedV10 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
@@ -137,61 +139,136 @@ int main(int argc, char const *argv[])
     std::vector<int> v1000(1000);
     std::generate(v1000.begin(), v1000.end(), std::rand);
 
-    std::cout << "\nQuestion 2: SelectionSort" << std::endl;
-
-    printValues("Sorting 10 random points:", v10);
+//SELECTION SORT
+    auto startSelectionV10 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultSelectionV10 = selectionSort(v10);
-    printValues("10 random points sorteds:", resultSelectionV10);
+    auto endSelectionV10 = std::chrono::high_resolution_clock::now();
+    auto timeSelectionV10 = std::chrono::duration_cast<std::chrono::nanoseconds>(endSelectionV10 - startSelectionV10);
 
-    printValues("Sorting 100 random points:", v100);
+    auto startSelectionV100 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultSelectionV100 = selectionSort(v100);
-    printValues("100 random points sorteds:", resultSelectionV100);
+    auto endSelectionV100 = std::chrono::high_resolution_clock::now();
+    auto timeSelectionV100 = std::chrono::duration_cast<std::chrono::nanoseconds>(endSelectionV100 - startSelectionV100);
 
-    printValues("Sorting 1000 random points:", v1000);
+    auto startSelectionV1000 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultSelectionV1000 = selectionSort(v1000);
-    printValues("1000 random points sorteds:", resultSelectionV1000);
+    auto endSelectionV1000 = std::chrono::high_resolution_clock::now();
+    auto timeSelectionV1000 = std::chrono::duration_cast<std::chrono::nanoseconds>(endSelectionV1000 - startSelectionV1000);
 
-    printValues("Sorting 10 already sorted:", sortedV10);
+    auto startSelectionV10AlreadySorted = std::chrono::high_resolution_clock::now();
     std::vector<int> resultSelectionV10AlreadySorted = selectionSort(sortedV10);
-    printValues("10 random points sorteds:", resultSelectionV10AlreadySorted);
+    auto endSelectionV10AlreadySorted = std::chrono::high_resolution_clock::now();
+    auto timeSelectionV10AlreadySorted = std::chrono::duration_cast<std::chrono::nanoseconds>(endSelectionV10AlreadySorted - startSelectionV10AlreadySorted);
 
-    std::cout << "\nQuestion 3: QuickSort" << std::endl;
-
-    printValues("Sorting 10 random points:", v10);
+//QUICK SORT
+    auto startQuickV10 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultQuickV10 = v10;
     quickSort(resultQuickV10.data(), 0, resultQuickV10.size() - 1);
-    printValues("10 random points sorteds:", resultQuickV10);
+    auto endQuickV10 = std::chrono::high_resolution_clock::now();
+    auto timeQuickV10 = std::chrono::duration_cast<std::chrono::nanoseconds>(endQuickV10 - startQuickV10);
 
-    printValues("Sorting 100 random points:", v100);
+    auto startQuickV100 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultQuickV100 = v100;
     quickSort(resultQuickV100.data(), 0, resultQuickV100.size() - 1);
-    printValues("100 random points sorteds:", resultQuickV100);
+    auto endQuickV100 = std::chrono::high_resolution_clock::now();
+    auto timeQuickV100 = std::chrono::duration_cast<std::chrono::nanoseconds>(endQuickV100 - startQuickV100);
 
-    printValues("Sorting 1000 random points:", v1000);
+    auto startQuickV1000 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultQuickV1000 = v1000;
     quickSort(resultQuickV1000.data(), 0, resultQuickV1000.size() - 1);
-    printValues("1000 random points sorteds:", resultQuickV1000);
+    auto endQuickV1000 = std::chrono::high_resolution_clock::now();
+    auto timeQuickV1000 = std::chrono::duration_cast<std::chrono::nanoseconds>(endQuickV1000 - startQuickV1000);
 
-    printValues("Sorting 10 already sorted:", sortedV10);
+    auto startQuickV10AlreadySorted = std::chrono::high_resolution_clock::now();
     std::vector<int> resultQuickV10AlreadySorted = sortedV10;
     quickSort(resultQuickV10AlreadySorted.data(), 0, resultQuickV10AlreadySorted.size() - 1);
-    printValues("10 random points sorteds:", resultQuickV10AlreadySorted);
+    auto endQuickV10AlreadySorted = std::chrono::high_resolution_clock::now();
+    auto timeQuickV10AlreadySorted = std::chrono::duration_cast<std::chrono::nanoseconds>(endQuickV10AlreadySorted - startQuickV10AlreadySorted);
 
-    std::cout << "\nQuestion 4: MergeSort" << std::endl;
-
-    printValues("Sorting 10 random points:", v10);
+//MERGE SORT
+    auto startMergeV10 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultMergeV10 = mergeSort(v10);
-    printValues("10 random points sorteds:", resultMergeV10);
+    auto endMergeV10 = std::chrono::high_resolution_clock::now();
+    auto timeMergeV10 = std::chrono::duration_cast<std::chrono::nanoseconds>(endMergeV10 - startMergeV10);
 
-    printValues("Sorting 100 random points:", v100);
+    auto startMergeV100 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultMergeV100 = mergeSort(v100);
-    printValues("100 random points sorteds:", resultMergeV100);
+    auto endMergeV100 = std::chrono::high_resolution_clock::now();
+    auto timeMergeV100 = std::chrono::duration_cast<std::chrono::nanoseconds>(endMergeV100 - startMergeV100);
 
-    printValues("Sorting 1000 random points:", v1000);
+    auto startMergeV1000 = std::chrono::high_resolution_clock::now();
     std::vector<int> resultMergeV1000 = mergeSort(v1000);
-    printValues("1000 random points sorteds:", resultMergeV1000);
+    auto endMergeV1000 = std::chrono::high_resolution_clock::now();
+    auto timeMergeV1000 = std::chrono::duration_cast<std::chrono::nanoseconds>(endMergeV1000 - startMergeV1000);
 
-    printValues("Sorting 10 already sorted:", sortedV10);
+    auto startMergeV10AlreadySorted = std::chrono::high_resolution_clock::now();
     std::vector<int> resultMergeV10AlreadySorted = mergeSort(sortedV10);
-    printValues("10 random points sorteds:", resultMergeV10AlreadySorted);
+    auto endMergeV10AlreadySorted = std::chrono::high_resolution_clock::now();
+    auto timeMergeV10AlreadySorted = std::chrono::duration_cast<std::chrono::nanoseconds>(endMergeV10AlreadySorted - startMergeV10AlreadySorted);
+
+    std::cout << "\n\nQuestion 2: SelectionSort" << std::endl;
+
+    if(showDetails)
+    {
+        printValues("Sorting 10 random points:", v10);
+        printValues("10 random points sorteds:", resultSelectionV10);
+
+        printValues("Sorting 100 random points:", v100);
+        printValues("100 random points sorteds:", resultSelectionV100);
+
+        printValues("Sorting 1000 random points:", v1000);
+        printValues("1000 random points sorteds:", resultSelectionV1000);
+
+        printValues("Sorting 10 already sorted:", sortedV10);
+        printValues("10 random points sorteds:", resultSelectionV10AlreadySorted);
+    }
+
+    std::cout << "\n" << "Time to sort 10 random points: " << timeSelectionV10.count() << " ns" << std::endl;
+    std::cout << "Time to sort 100 random points: " << timeSelectionV100.count() << " ns" << std::endl;
+    std::cout << "Time to sort 1000 random points: " << timeSelectionV1000.count() << " ns" << std::endl;
+    std::cout << "Time to sort 10 already sorted points: " << timeSelectionV10AlreadySorted.count() << " ns" << std::endl;
+
+    std::cout << "\n\nQuestion 3: QuickSort" << std::endl;
+
+    if(showDetails)
+    {
+        printValues("Sorting 10 random points:", v10);
+        printValues("10 random points sorteds:", resultQuickV10);
+
+        printValues("Sorting 100 random points:", v100);
+        printValues("100 random points sorteds:", resultQuickV100);
+
+        printValues("Sorting 1000 random points:", v1000);
+        printValues("1000 random points sorteds:", resultQuickV1000);
+
+        printValues("Sorting 10 already sorted:", sortedV10);
+        printValues("10 random points sorteds:", resultQuickV10AlreadySorted);
+    }
+
+    std::cout << "\n" << "Time to sort 10 random points: " << timeQuickV10.count() << " ns" << std::endl;
+    std::cout << "Time to sort 100 random points: " << timeQuickV100.count() << " ns" << std::endl;
+    std::cout << "Time to sort 1000 random points: " << timeQuickV1000.count() << " ns" << std::endl;
+    std::cout << "Time to sort 10 already sorted points: " << timeQuickV10AlreadySorted.count() << " ns" << std::endl;
+
+    std::cout << "\n\nQuestion 4: MergeSort" << std::endl;
+
+    if(showDetails)
+    {
+        printValues("Sorting 10 random points:", v10);
+        printValues("10 random points sorteds:", resultMergeV10);
+
+        printValues("Sorting 100 random points:", v100);
+        printValues("100 random points sorteds:", resultMergeV100);
+
+        printValues("Sorting 1000 random points:", v1000);
+        printValues("1000 random points sorteds:", resultMergeV1000);
+
+        printValues("Sorting 10 already sorted:", sortedV10);
+        printValues("10 random points sorteds:", resultMergeV10AlreadySorted);
+    }
+
+    std::cout << "\n" << "Time to sort 10 random points: " << timeMergeV10.count() << " ns" << std::endl;
+    std::cout << "Time to sort 100 random points: " << timeMergeV100.count() << " ns" << std::endl;
+    std::cout << "Time to sort 1000 random points: " << timeMergeV1000.count() << " ns" << std::endl;
+    std::cout << "Time to sort 10 already sorted points: " << timeMergeV10AlreadySorted.count() << " ns" << std::endl;
 }
