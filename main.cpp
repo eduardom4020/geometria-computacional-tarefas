@@ -6,35 +6,61 @@
 #include <vector>
 #include <stdlib.h>
 
-void printValues(std::string title, std::vector<int> vector)
+void printValues(std::string title, std::vector<int> array)
 {
     std::cout << "\n" << title << std::endl;
 
-    for(auto& value : vector)
+    for(auto& value : array)
     {
         std::cout << value << " ";
     }
     std::cout << std::endl;
 }
 
-std::vector<int> selectionSort(std::vector<int> vector)
+std::vector<int> selectionSort(std::vector<int> array)
 {
-    for(int i=0; i < vector.size(); i++)
+    for(int i=0; i < array.size(); i++)
     {
         int selectedIndex = i;
 
-        for(int j=i+1; j < vector.size(); j++)
+        for(int j=i+1; j < array.size(); j++)
         {
-            if(vector[j] < vector[selectedIndex])
+            if(array[j] < array[selectedIndex])
             {
                 selectedIndex = j;
             }
         }
 
-        iter_swap(vector.begin() + i, vector.begin() + selectedIndex);
+        std::iter_swap(array.begin() + i, array.begin() + selectedIndex);
     }
 
-    return vector;
+    return array;
+}
+
+std::vector<int> quickSort(std::vector<int> array, int startIndex, int endIndex)
+{
+    int i = startIndex;
+    int j = endIndex;
+    int pivot = array[(i + j) / 2];
+
+    while (i <= j)
+    {
+        while (array[i] < pivot)
+            i++;
+        while (array[j] > pivot)
+            j--;
+        if (i <= j)
+        {
+            std::iter_swap(array.begin() + i, array.begin() + j);
+
+            i++;
+            j--;
+        }
+    }
+    if (j > startIndex)
+        quickSort(array, startIndex, j);
+    if (i < endIndex)
+        quickSort(array, i, endIndex);
 }
 
 int main(int argc, char const *argv[])
@@ -52,7 +78,7 @@ int main(int argc, char const *argv[])
     std::vector<int> v1000(1000);
     std::generate(v1000.begin(), v1000.end(), std::rand);
 
-    std::cout << "Question 2: SelectionSort" << std::endl;
+    std::cout << "\nQuestion 2: SelectionSort" << std::endl;
 
     printValues("Sorting 10 random points:", v10);
     std::vector<int> resultSelectionV10 = selectionSort(v10);
@@ -69,4 +95,22 @@ int main(int argc, char const *argv[])
     printValues("Sorting 10 already sorted:", sortedV10);
     std::vector<int> resultSelectionV10AlreadySorted = selectionSort(sortedV10);
     printValues("10 random points sorteds:", resultSelectionV10AlreadySorted);
+
+    std::cout << "\nQuestion 3: QuickSort" << std::endl;
+
+    printValues("Sorting 10 random points:", v10);
+    std::vector<int> resultQuickV10 = quickSort(v10);
+    printValues("10 random points sorteds:", resultQuickV10);
+
+    printValues("Sorting 100 random points:", v100);
+    std::vector<int> resultQuickV100 = quickSort(v100);
+    printValues("100 random points sorteds:", resultQuickV100);
+
+    printValues("Sorting 1000 random points:", v1000);
+    std::vector<int> resultQuickV1000 = quickSort(v1000);
+    printValues("1000 random points sorteds:", resultQuickV1000);
+
+    printValues("Sorting 10 already sorted:", sortedV10);
+    std::vector<int> resultQuickV10AlreadySorted = quickSort(sortedV10);
+    printValues("10 random points sorteds:", resultQuickV10AlreadySorted);
 }
