@@ -69,6 +69,59 @@ void quickSort(int* array, int startIndex, int endIndex)
     }
 }
 
+std::vector<int> merge(std::vector<int> left, std::vector<int> right)
+{
+	int i = 0;
+    int j = 0;
+
+    int left_len = left.size();
+    int right_len = right.size();
+
+	std::vector<int> merged;
+
+	while(i < left_len && j < right_len)
+	{
+		if(left[i] < right[j]) {
+			merged.push_back(left[i]);
+            i++;
+		} else {
+			merged.push_back(right[j]);
+            j++;
+		}
+	}
+
+	while(i < left_len) {
+		merged.push_back(left[i]);
+        i++;
+	}
+
+	while(j < right_len) {
+		merged.push_back(right[j]);
+        j++;
+	}
+
+	return merged;
+}
+
+std::vector<int> mergeSort(std::vector<int> array)
+{
+    int len = array.size();
+
+	if(len <= 1)
+	{
+		return array;
+	}
+
+	int pivot = len/2;
+
+    std::vector<int> leftSlice(array.begin(), array.begin() + pivot);
+	std::vector<int> rightSlice(array.begin() + pivot, array.end());
+    
+	std::vector<int> leftArray = mergeSort(leftSlice);
+	std::vector<int> rightArray = mergeSort(rightSlice);
+	return merge(leftArray, rightArray);
+}
+
 int main(int argc, char const *argv[])
 {
     std::cout << "Homework 1: Sorting Algorithms" << std::endl;
@@ -123,4 +176,22 @@ int main(int argc, char const *argv[])
     std::vector<int> resultQuickV10AlreadySorted = sortedV10;
     quickSort(resultQuickV10AlreadySorted.data(), 0, resultQuickV10AlreadySorted.size() - 1);
     printValues("10 random points sorteds:", resultQuickV10AlreadySorted);
+
+    std::cout << "\nQuestion 4: MergeSort" << std::endl;
+
+    printValues("Sorting 10 random points:", v10);
+    std::vector<int> resultMergeV10 = mergeSort(v10);
+    printValues("10 random points sorteds:", resultMergeV10);
+
+    printValues("Sorting 100 random points:", v100);
+    std::vector<int> resultMergeV100 = mergeSort(v100);
+    printValues("100 random points sorteds:", resultMergeV100);
+
+    printValues("Sorting 1000 random points:", v1000);
+    std::vector<int> resultMergeV1000 = mergeSort(v1000);
+    printValues("1000 random points sorteds:", resultMergeV1000);
+
+    printValues("Sorting 10 already sorted:", sortedV10);
+    std::vector<int> resultMergeV10AlreadySorted = mergeSort(sortedV10);
+    printValues("10 random points sorteds:", resultMergeV10AlreadySorted);
 }
