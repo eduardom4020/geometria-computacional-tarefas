@@ -123,6 +123,35 @@ std::vector<int> mergeSort(std::vector<int> array)
 	return merge(leftArray, rightArray);
 }
 
+bool isPolygonalLine(std::vector<int> points, std::string sortAlgorithm)
+{
+    std::vector<int> sortedPoints;
+
+    if(sortAlgorithm == "selection")
+    {
+        sortedPoints = selectionSort(points);
+    }
+    else if(sortAlgorithm == "quick")
+    {
+        sortedPoints = points;
+        quickSort(sortedPoints.data(), 0, sortedPoints.size() - 1);
+    }
+    else
+    {
+        sortedPoints = mergeSort(points);
+    }
+
+    for(int i=0; i < sortedPoints.size(); i++)
+    {
+        if(i > 0 && sortedPoints[i] == sortedPoints[i-1])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 int main(int argc, char const *argv[])
 {
     std::cout << "Homework 1: Sorting Algorithms" << std::endl;
@@ -271,4 +300,19 @@ int main(int argc, char const *argv[])
     std::cout << "Time to sort 100 random points: " << timeMergeV100.count() << " ns" << std::endl;
     std::cout << "Time to sort 1000 random points: " << timeMergeV1000.count() << " ns" << std::endl;
     std::cout << "Time to sort 10 already sorted points: " << timeMergeV10AlreadySorted.count() << " ns" << std::endl;
+
+    std::cout << "\n\nQuestion 6: PolygonalLine" << std::endl;
+
+    std::vector<int> polyLineValid = { 3, 6, 1, 20, 8, 9, 10, 4, 13 };
+    std::vector<int> polyLineInvalid = { 3, 6, 1, 20, 1, 9, 10, 4, 13 }; 
+
+    printValues("\nPoints make a polygonal line? ", polyLineValid);
+    std::cout << "Reducing to Selection Sort " << (isPolygonalLine(polyLineValid, "selection") ? "Yes" : "No") << std::endl;
+    std::cout << "Reducing to Quick Sort " << (isPolygonalLine(polyLineValid, "quick") ? "Yes" : "No") << std::endl;
+    std::cout << "Reducing to Merge Sort " << (isPolygonalLine(polyLineValid, "merge") ? "Yes" : "No") << std::endl;
+
+    printValues("\nPoints make a polygonal line? ", polyLineInvalid);
+    std::cout << "Reducing to Selection Sort " << (isPolygonalLine(polyLineInvalid, "selection") ? "Yes" : "No") << std::endl;
+    std::cout << "Reducing to Quick Sort " << (isPolygonalLine(polyLineInvalid, "quick") ? "Yes" : "No") << std::endl;
+    std::cout << "Reducing to Merge Sort " << (isPolygonalLine(polyLineInvalid, "merge") ? "Yes" : "No") << std::endl;
 }
