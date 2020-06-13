@@ -1,16 +1,16 @@
-# My first makefile
-
-COMPILED_PATHS = ./build/compiled/homework1.o
-
-REQUISITES = 
-
-all: homework1
+all: homework1 homework2
 	clear
 
-homework1: $(REQUISITES) main.o
-	g++ -std=c++1y -o ./build/homework1 $(COMPILED_PATHS)
+homework2: homework2.o
+	g++ -std=c++1y -o ./build/homework2 ./build/compiled/homework2.o
 
-main.o: $(REQUISITES)
+homework2.o:
+	g++ -std=c++1y -o ./build/compiled/homework2.o -c ./homework2.cpp
+
+homework1: homework1.o
+	g++ -std=c++1y -o ./build/homework1 ./build/compiled/homework1.o
+
+homework1.o:
 	g++ -std=c++1y -o ./build/compiled/homework1.o -c ./homework1.cpp
 
 clean:

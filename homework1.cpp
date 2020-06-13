@@ -123,28 +123,77 @@ std::vector<int> mergeSort(std::vector<int> array)
 	return merge(leftArray, rightArray);
 }
 
-//TODO: Correct this to use points with x and y coordinates
-bool isPolygonalLine(std::vector<int> points, std::string sortAlgorithm)
+class Point
+{    
+
+public:
+    int x, y;
+
+    Point()
+    {
+        x = 0; y = 0;
+    }
+
+    Point(int X, int Y)
+    {
+        x = X; y = Y;
+    }
+
+    std::string toString()
+    {
+        std::string out = "p( ";
+        out.append(std::to_string(x));
+        out.append(", ");
+        out.append(std::to_string(y));
+        out.append(" )");
+        return out;
+    }
+
+    bool operator==(Point& point)
+    {
+        return point.x == x && point.y == y;
+    }
+        
+};
+
+void printPoints(std::string title, std::vector<Point> points)
 {
-    std::vector<int> sortedPoints;
+    std::cout << "\n" << title << std::endl;
+
+    for(auto& point : points)
+    {
+        std::cout << point.toString() << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+bool isPolygonalLine(std::vector<Point> points, std::string sortAlgorithm)
+{
+    std::vector<int> pointsX;
+    std::vector<int> sortedPointsX;
+
+    for(int i=0; i < points.size(); i++)
+    {
+        pointsX.push_back(points[i].x);
+    }
 
     if(sortAlgorithm == "selection")
     {
-        sortedPoints = selectionSort(points);
+        sortedPointsX = selectionSort(pointsX);
     }
     else if(sortAlgorithm == "quick")
     {
-        sortedPoints = points;
-        quickSort(sortedPoints.data(), 0, sortedPoints.size() - 1);
+        sortedPointsX = pointsX;
+        quickSort(sortedPointsX.data(), 0, sortedPointsX.size() - 1);
     }
     else
     {
-        sortedPoints = mergeSort(points);
+        sortedPointsX = mergeSort(pointsX);
     }
 
-    for(int i=0; i < sortedPoints.size(); i++)
+    for(int i=0; i < sortedPointsX.size(); i++)
     {
-        if(i > 0 && sortedPoints[i] == sortedPoints[i-1])
+        if(i > 0 && sortedPointsX[i] == sortedPointsX[i-1])
         {
             return false;
         }
@@ -306,15 +355,15 @@ int main(int argc, char const *argv[])
 
     std::cout << "\n\nQuestion 6: PolygonalLine" << std::endl;
 
-    std::vector<int> polyLineValid = { 3, 6, 1, 20, 8, 9, 10, 4, 13 };
-    std::vector<int> polyLineInvalid = { 3, 6, 1, 20, 1, 9, 10, 4, 13 }; 
+    std::vector<Point> polyLineValid = { Point(3, 2), Point(6, 2), Point(1, 2), Point(20, 1), Point(8, 1), Point(9, 1), Point(10, 0), Point(4, 0), Point(12, 0), Point(13, 0) };
+    std::vector<Point> polyLineInvalid = { Point(3, 2), Point(6, 2), Point(1, 2), Point(20, 1), Point(8, 1), Point(9, 1), Point(10, 0), Point(4, 0), Point(6, 2), Point(13, 0) }; 
 
-    printValues("\nPoints make a polygonal line? ", polyLineValid);
+    printPoints("\nPoints make a polygonal line? ", polyLineValid);
     std::cout << "Reducing to Selection Sort " << (isPolygonalLine(polyLineValid, "selection") ? "Yes" : "No") << std::endl;
     std::cout << "Reducing to Quick Sort " << (isPolygonalLine(polyLineValid, "quick") ? "Yes" : "No") << std::endl;
     std::cout << "Reducing to Merge Sort " << (isPolygonalLine(polyLineValid, "merge") ? "Yes" : "No") << std::endl;
 
-    printValues("\nPoints make a polygonal line? ", polyLineInvalid);
+    printPoints("\nPoints make a polygonal line? ", polyLineInvalid);
     std::cout << "Reducing to Selection Sort " << (isPolygonalLine(polyLineInvalid, "selection") ? "Yes" : "No") << std::endl;
     std::cout << "Reducing to Quick Sort " << (isPolygonalLine(polyLineInvalid, "quick") ? "Yes" : "No") << std::endl;
     std::cout << "Reducing to Merge Sort " << (isPolygonalLine(polyLineInvalid, "merge") ? "Yes" : "No") << std::endl;
