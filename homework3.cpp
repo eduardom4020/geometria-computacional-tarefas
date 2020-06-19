@@ -1,0 +1,418 @@
+#include <random>
+#include <algorithm>
+#include <iterator>
+#include <iostream>
+#include <functional>
+#include <vector>
+#include <stdlib.h>
+#include <chrono>
+#include <math.h>
+
+
+void printValues(std::string title, std::vector<double> array)
+{
+    std::cout << "\n" << title << std::endl;
+
+    for(auto& value : array)
+    {
+        std::cout << value << " ";
+    }
+    std::cout << std::endl;
+}
+
+class Point
+{    
+
+public:
+    double x, y;
+
+    Point()
+    {
+        x = 0; y = 0;
+    }
+
+    Point(double X, double Y)
+    {
+        x = X; y = Y;
+    }
+
+    std::string toString()
+    {
+        std::string out = "p( ";
+        out.append(std::to_string(x));
+        out.append(", ");
+        out.append(std::to_string(y));
+        out.append(" )");
+        return out;
+    }
+
+    bool operator==(Point& point)
+    {
+        return point.x == x && point.y == y;
+    }
+        
+};
+
+class Vector
+{
+
+public:
+    double x, y;
+
+    Vector()
+    {
+        x = 0; y = 0;
+    }
+
+    Vector(Point p)
+    {
+        x = p.x; y = p.y;
+    }
+
+    Vector(Point start, Point end)
+    {
+        x = end.x - start.x;
+        y = end.y - start.y;
+    }
+
+};
+
+Vector sub(Point p1, Point p2)
+{
+    return Vector(p2, p1);
+}
+
+class Triangle
+{
+    public:
+        Point p1, p2, p3;
+    
+        Triangle(Point P1, Point P2, Point P3)
+        {
+            p1 = P1;
+            p2 = P2;
+            p3 = P3;
+        }
+};
+
+double dot(Vector v1, Vector v2)
+{
+    double x = v1.x * v2.x;
+    double y = v1.y * v2.y;
+
+    return x + y;
+}
+
+double sqrLen(Vector v)
+{
+    double x = pow(v.x, 2);
+    double y = pow(v.y, 2);
+
+    return x + y;
+}
+
+double len(Vector v)
+{
+    double sqred_len = sqrLen(v);
+    return sqrt(sqred_len);
+}
+
+double crossR2(Vector v1, Vector v2)
+{
+    return v1.x * v2.y - v1.y * v2.x;
+}
+
+double orientedArea(Triangle triangle)
+{
+    double crossP1P2 = crossR2( Vector(triangle.p1), Vector(triangle.p2) );
+    double crossP2P3 = crossR2( Vector(triangle.p2), Vector(triangle.p3) );
+    double crossP3P1 = crossR2( Vector(triangle.p3), Vector(triangle.p1) );
+    
+    double double_area = crossP1P2 + crossP2P3 + crossP3P1;
+
+    return double_area / 2;
+}
+
+double isCCW(Triangle triangle)
+{
+    double area = orientedArea(triangle);
+    return area > 0;
+}
+
+class Angle
+{
+
+public:
+    Angle(Vector v)
+    {
+        _v1 = v;
+        _v2 = _u;
+    }
+    
+    Angle(Vector v1, Vector v2)
+    {
+        _v1 = v1;
+        _v2 = v2;
+    }
+
+    double value()
+    {
+        return calcAngle(_v1, _v2);
+    }
+
+    double orientedValue()
+    {
+        double angleV1 = _v1.y >= 0 ? calcAngle(_u, _v1) : 2 * 3.1415 - calcAngle(_u, _v1);
+        double angleV2 = _v2.y >= 0 ? calcAngle(_u, _v2) : 2 * 3.1415 - calcAngle(_u, _v2);
+
+        return angleV1 - angleV2;
+    }
+
+    double unitarySquare()
+    {
+        double angle1 = pseudoAngleUnitarySquare(_v1);
+        double angle2 = pseudoAngleUnitarySquare(_v2);
+
+        return angle1 - angle2;
+    }
+
+private:
+    Vector _u = Vector( Point(1.0, 0.0) );
+    Vector _v1;
+    Vector _v2;
+
+    double pseudoAngleUnitarySquare(Vector v)
+    {
+        if(v.y >= 0)
+        {
+            if(v.x >= 0)
+            {
+                if(v.x >= v.y)
+                {
+                    return v.y / v.x;
+                }
+                else
+                {
+                    return 2 - v.x / v.y;
+                }
+            }
+            else if(-v.x <= v.y)
+            {
+                return 2 + (-v.x) / v.y;
+            }
+            else
+            {
+                return 4 - v.y / (-v.x);
+            }
+        }
+        else if(v.x < 0)
+        {
+            if(-v.x >= -v.y)
+            {
+                return 4 + (-v.y) / (-v.x);
+            }
+            else
+            {
+                return 6 - (-v.x) / (-v.y);
+            }
+        }
+        else if(v.x <= -v.y)
+        {
+            return 6 + v.x / (-v.y);
+        }
+        else
+        {
+            return 8 - (-v.y) / v.x;
+        }
+    }
+
+    double calcAngle(Vector v1, Vector v2)
+    {
+        double dotRes = dot(v1, v2);
+        double lenV1 = len(v1);
+        double lenV2 = len(v2);
+
+        double cos = dotRes / ( lenV1 * lenV2 );
+        double angle = acos( cos );
+
+        return angle;
+    }
+};
+
+std::vector<Point> merge(std::vector<Point> left, std::vector<Point> right)
+{
+	int i = 0;
+    int j = 0;
+
+    int left_len = left.size();
+    int right_len = right.size();
+
+	std::vector<Point> merged;
+
+	while(i < left_len && j < right_len)
+	{
+		if(left[i].y < right[j].y || (left[i].y == right[j].y && left[i].x < right[j].x)) {
+			merged.push_back(left[i]);
+            i++;
+		} else {
+			merged.push_back(right[j]);
+            j++;
+		}
+	}
+
+	while(i < left_len) {
+		merged.push_back(left[i]);
+        i++;
+	}
+
+	while(j < right_len) {
+		merged.push_back(right[j]);
+        j++;
+	}
+
+	return merged;
+}
+
+std::vector<Point> mergeSort(std::vector<Point> array)
+{
+    int len = array.size();
+
+	if(len <= 1)
+	{
+		return array;
+	}
+
+	int pivot = len/2;
+
+    std::vector<Point> leftSlice(array.begin(), array.begin() + pivot);
+	std::vector<Point> rightSlice(array.begin() + pivot, array.end());
+    
+	std::vector<Point> leftArray = mergeSort(leftSlice);
+	std::vector<Point> rightArray = mergeSort(rightSlice);
+
+    return merge(leftArray, rightArray);
+}
+
+std::vector<Point> mergeAngular(std::vector<Point> left, std::vector<Point> right, Point base)
+{
+	int i = 0;
+    int j = 0;
+
+    int left_len = left.size();
+    int right_len = right.size();
+
+	std::vector<Point> merged;
+
+	while(i < left_len && j < right_len)
+	{
+        Angle leftAngle = Angle( Vector( base, left[i] ) );
+        Angle rightAngle = Angle( Vector( base, right[j] ) );
+
+        double squareLeft = leftAngle.unitarySquare();
+        double squareRight = rightAngle.unitarySquare();
+
+		if(squareLeft < squareRight || (squareLeft == squareRight && left[i].x < right[j].x)) {
+			merged.push_back(left[i]);
+            i++;
+		} else {
+			merged.push_back(right[j]);
+            j++;
+		}
+	}
+
+	while(i < left_len) {
+		merged.push_back(left[i]);
+        i++;
+	}
+
+	while(j < right_len) {
+		merged.push_back(right[j]);
+        j++;
+	}
+
+	return merged;
+}
+
+std::vector<Point> mergeSortAngular(std::vector<Point> array, Point base)
+{
+    int len = array.size();
+
+	if(len <= 1)
+	{
+		return array;
+	}
+
+	int pivot = len/2;
+
+    std::vector<Point> leftSlice(array.begin(), array.begin() + pivot);
+	std::vector<Point> rightSlice(array.begin() + pivot, array.end());
+    
+	std::vector<Point> leftArray = mergeSortAngular(leftSlice, base);
+	std::vector<Point> rightArray = mergeSortAngular(rightSlice, base);
+
+    return mergeAngular(leftArray, rightArray, base);
+}
+
+void printPoints(std::string title, std::vector<Point> points)
+{
+    std::cout << "\n" << title << std::endl;
+
+    for(auto& point : points)
+    {
+        std::cout << point.toString() << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+std::vector<Point> graham(std::vector<Point> points)
+{
+    std::vector<Point> sortedPointsByAxis = mergeSort(points);
+
+    Point basePoint = sortedPointsByAxis[0];
+
+    std::vector<Point> hull = {basePoint};
+
+    sortedPointsByAxis.erase(sortedPointsByAxis.begin());
+    std::vector<Point> sortedPoints = mergeSortAngular(sortedPointsByAxis, basePoint);
+    sortedPoints.insert(sortedPoints.begin(), basePoint);
+    
+    hull.reserve(sortedPoints.size());
+
+    int index = 0;
+    int ignoring = 0;
+
+    do
+    {
+        Point current = sortedPoints[index];
+        Point next = sortedPoints[index + ignoring + 1];
+        Point nNext = sortedPoints[index + ignoring + 2];
+
+        Triangle triangle = Triangle(current, next, nNext);
+
+        if(isCCW(triangle))
+        {
+            hull.push_back(next);
+            index += ignoring + 1;
+            ignoring = 0;
+        }
+        else
+        {
+            ignoring++;
+        }
+    }
+    while(index + ignoring + 2 <= sortedPoints.size());
+
+    return hull;
+}
+
+int main(int argc, char const *argv[])
+{
+    std::cout << "Homework 3: Convex hulls" << std::endl;
+    bool showDetails = argc >= 2 && std::string(argv[1]) == "detailed";
+
+    std::vector<Point> points = { Point(1,0), Point(3,0), Point(5,0), Point(6,1), Point(1,3), Point(0,1), Point(4,1.5), Point(1.5, 2.2), Point(3.5,3) };
+
+    std::vector<Point> hull = graham(points);
+    printPoints("\nConvex hull of ", points);
+    printPoints("is ", hull);
+}
