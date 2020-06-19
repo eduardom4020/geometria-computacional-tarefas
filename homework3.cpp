@@ -50,6 +50,11 @@ public:
     {
         return point.x == x && point.y == y;
     }
+
+    bool operator!=(Point& point)
+    {
+        return point.x != x || point.y != y;
+    }
         
 };
 
@@ -364,7 +369,7 @@ void printPoints(std::string title, std::vector<Point> points)
     std::cout << std::endl;
 }
 
-std::vector<Point> graham(std::vector<Point> points)
+std::vector<Point> grahamHull(std::vector<Point> points)
 {
     std::vector<Point> sortedPointsByAxis = mergeSort(points);
 
@@ -405,6 +410,76 @@ std::vector<Point> graham(std::vector<Point> points)
     return hull;
 }
 
+bool contains(std::vector<Point> points, Point point)
+{
+    for(auto& somePoint : points)
+    {
+        if(somePoint == point)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::vector<Point> jarvisHull(std::vector<Point> points)
+{
+    std::vector<Point> sortedPoints = mergeSort(points);
+
+    Point basePoint = sortedPoints[0];
+
+    std::vector<Point> hull = { basePoint };
+
+    Vector rotationAxis = Vector( basePoint, Point(basePoint.x + 1, basePoint.y) );
+
+    Point currentPoint = basePoint;
+
+    do
+    {
+        double minAngle = INFINITY;
+        int selectedIndex = -1;
+
+        for(int i = 0; i < sortedPoints.size(); i++)
+        {
+            if(currentPoint != sortedPoints[i] && ( !contains(hull, sortedPoints[i]) || sortedPoints[i] == basePoint))
+            {
+                Angle currentAngle = Angle( Vector( currentPoint, sortedPoints[i] ), rotationAxis );
+                double pseudoValue = currentAngle.unitarySquare();
+                
+                if(pseudoValue >= 0 && pseudoValue < minAngle)
+                {
+                    minAngle = pseudoValue;
+                    selectedIndex = i;
+                }
+                else if(pseudoValue == minAngle && currentPoint.x < sortedPoints[i].x)
+                {
+                    selectedIndex = i;
+                }
+            }
+        }
+
+        if(selectedIndex >= 0)
+        {
+            if(sortedPoints[selectedIndex] != basePoint)
+            {
+                hull.push_back(sortedPoints[selectedIndex]);
+
+                rotationAxis = Vector( currentPoint, sortedPoints[selectedIndex] );
+            }
+            
+            currentPoint = sortedPoints[selectedIndex];
+        }
+        else
+        {
+            throw "Unable to execute jarvis hull for this set of points. This is probably a bug in code.";
+        }
+    }
+    while(currentPoint != basePoint);
+
+    return hull;
+}
+
 int main(int argc, char const *argv[])
 {
     std::cout << "Homework 3: Convex hulls" << std::endl;
@@ -412,7 +487,19 @@ int main(int argc, char const *argv[])
 
     std::vector<Point> points = { Point(1,0), Point(3,0), Point(5,0), Point(6,1), Point(1,3), Point(0,1), Point(4,1.5), Point(1.5, 2.2), Point(3.5,3) };
 
-    std::vector<Point> hull = graham(points);
-    printPoints("\nConvex hull of ", points);
-    printPoints("is ", hull);
+    std::vector<Point> grahan_hull = grahamHull(points);
+    printPoints("Grahan Hull of ", points);
+    printPoints("is ", grahan_hull);
+
+    try
+    {
+        std::vector<Point> jarvis_hull = jarvisHull(points);
+        printPoints("Jarvis Hull of ", points);
+        printPoints("is ", jarvis_hull);
+    }
+    catch(char const* exception)
+    {
+        std::cout << "ERROR!" << std::endl;
+        std::cout << exception << std::endl;
+    }
 }
