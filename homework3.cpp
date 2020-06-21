@@ -144,6 +144,24 @@ double isCCW(Triangle triangle)
     return area > 0;
 }
 
+class Edge
+{
+
+public:
+    Point start, end;
+
+    Edge()
+    {
+    }
+
+    Edge(Point Start, Point End)
+    {
+        start = Start;
+        end = End;
+    }
+
+};
+
 class Angle
 {
 
@@ -480,6 +498,119 @@ std::vector<Point> jarvisHull(std::vector<Point> points)
     return hull;
 }
 
+bool isPointLeft(Point point, Edge edge)
+{
+    Vector pointVec = Vector(edge.start, point);
+    Vector edgeVec = Vector(edge.start, edge.end);
+
+    Angle angle = Angle(pointVec, edgeVec);
+    
+    return angle.unitarySquare() >= 0;
+}
+
+std::vector<Point> splitLeft(std::vector<Point> points, Edge edge)
+{
+    std::vector<Point> leftPoints = {};
+
+    for(auto& point : points)
+    {
+        if(isPointLeft(point, edge))
+        {
+            leftPoints.push_back(point);
+        }
+    }
+
+    return leftPoints;
+}
+
+std::vector<Point> splitRight(std::vector<Point> points, Edge edge)
+{
+    std::vector<Point> rightPoints = {};
+
+    for(auto& point : points)
+    {
+        if(!isPointLeft(point, edge))
+        {
+            rightPoints.push_back(point);
+        }
+    }
+
+    return rightPoints;
+}
+
+void quickHullStep(std::vector<Point>* hull, std::vector<Point> points, std::vector<Edge>* freeEdges)
+{
+    if(freeEdges->size() == 0)
+    {
+        return;
+    }
+
+    Edge edge = freeEdges->at(freeEdges->size() - 1);
+    freeEdges->pop_back();
+
+    double area = -INFINITY;
+    int selectedIndex = -1;
+
+    for(int i=0; i < points.size(); i++)
+    {
+        Triangle candidate = Triangle(edge.start, edge.end, points[i]);
+        double candidateArea = orientedArea(candidate);
+
+        if(candidateArea > area)
+        {
+            area = candidateArea;
+            selectedIndex = i;
+        }
+    }
+    std::cout << "selectedIndex " << selectedIndex << std::endl;
+    if(selectedIndex >= 0)
+    {
+        if(!contains(*hull, points[selectedIndex]))
+        {
+            hull->push_back(points[selectedIndex]);
+            freeEdges->push_back( Edge(edge.start, points[selectedIndex]) );
+            freeEdges->push_back( Edge(points[selectedIndex], edge.end) );
+        }
+    }
+    else
+    {
+        throw "Unable to execute quick hull for this set of points. This is probably a bug in code.";
+    }
+
+    std::vector<Point> left = splitLeft(points, edge);
+	std::vector<Point> right = splitRight(points, edge);
+
+    quickHullStep(hull, left, freeEdges);
+    quickHullStep(hull, right, freeEdges);
+}
+
+std::vector<Point> quickHull(std::vector<Point> points)
+{
+    std::vector<Point> hull = {};
+    hull.reserve(points.size());
+    std::vector<Edge> freeEdges = {};
+    freeEdges.reserve(points.size());
+
+    std::vector<Point> sortedPoints = mergeSort(points);
+
+    Point lessExtreme = sortedPoints[0];
+    Point greaterExtreme = sortedPoints[sortedPoints.size() - 1];
+
+    sortedPoints.erase(sortedPoints.begin());
+    sortedPoints.pop_back();
+
+    Edge middleEdge = Edge(lessExtreme, greaterExtreme);
+    freeEdges.push_back(middleEdge);
+    
+    std::vector<Point> left = splitLeft(points, middleEdge);
+	std::vector<Point> right = splitRight(points, middleEdge);
+
+    quickHullStep(&hull, left, &freeEdges);
+    quickHullStep(&hull, right, &freeEdges);
+
+    return hull;
+}
+
 int main(int argc, char const *argv[])
 {
     std::cout << "Homework 3: Convex hulls" << std::endl;
@@ -487,9 +618,9 @@ int main(int argc, char const *argv[])
 
     std::vector<Point> points = { Point(1,0), Point(3,0), Point(5,0), Point(6,1), Point(1,3), Point(0,1), Point(4,1.5), Point(1.5, 2.2), Point(3.5,3) };
 
-    std::vector<Point> grahan_hull = grahamHull(points);
-    printPoints("Grahan Hull of ", points);
-    printPoints("is ", grahan_hull);
+    std::vector<Point> graham_hull = grahamHull(points);
+    printPoints("Graham Hull of ", points);
+    printPoints("is ", graham_hull);
 
     try
     {
