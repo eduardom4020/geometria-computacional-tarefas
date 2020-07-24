@@ -1,5 +1,11 @@
-all: homework1 homework2 homework3
+all: homework1 homework2 homework3 homework4
 	clear
+
+homework4: homework4.o
+	g++ -std=c++1y -o ./build/homework4 ./build/compiled/homework4.o
+
+homework4.o:
+	g++ -std=c++1y -o ./build/compiled/homework4.o -c ./homework4.cpp
 
 homework3: homework3.o
 	g++ -std=c++1y -o ./build/homework3 ./build/compiled/homework3.o
