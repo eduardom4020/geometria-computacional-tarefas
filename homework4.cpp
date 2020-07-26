@@ -103,12 +103,28 @@ class Triangle
 {
     public:
         Point p1, p2, p3;
+
+        Triangle()
+        {
+        }
     
         Triangle(Point P1, Point P2, Point P3)
         {
             p1 = P1;
             p2 = P2;
             p3 = P3;
+        }
+
+        std::string toString()
+        {
+            std::string out = "t[ ";
+            out.append(p1.toString());
+            out.append(", ");
+            out.append(p2.toString());
+            out.append(", ");
+            out.append(p3.toString());
+            out.append(" ]");
+            return out;
         }
 };
 
@@ -465,6 +481,41 @@ bool containsEdge(std::vector<Edge> edges, Edge edge)
     return false;
 }
 
+Triangle getTriangle(Edge e1, Edge e2, Edge e3)
+{
+    std::vector<Point> points = { e1.start, e1.end, e2.start, e2.end, e3.start, e3.end };
+
+    Triangle triangle;
+
+    Point blank = Point(0.0,0.0);
+
+    for(auto& point : points)
+    {
+        if(triangle.p1 != point && triangle.p2 != point && triangle.p3 != point)
+        {
+            if(triangle.p1 == blank) 
+            {
+                triangle.p1 = point;
+            }
+            else 
+            {
+                if(triangle.p2 == blank && triangle.p1 != point) 
+                {
+                    triangle.p2 = point;
+                }
+                else if(triangle.p3 == blank && triangle.p1 != point && triangle.p2 != point)
+                {
+                    triangle.p3 = point;
+                }
+            }
+        }
+    }
+
+    toCW(triangle);
+
+    return triangle;
+}
+
 std::vector<Triangle> scanTriangulation(std::vector<Point> points)
 {
     if(points.size() < 3) throw "Invalid number of points";
@@ -477,50 +528,87 @@ std::vector<Triangle> scanTriangulation(std::vector<Point> points)
     edges.reserve(3 * points.size());
 
     edges.push_back(Edge(sortedPoints[0], sortedPoints[1]));
+
+    std::vector<Point> usedPoints = { sortedPoints[0], sortedPoints[1] };
     
     sortedPoints.erase(sortedPoints.begin());
     sortedPoints.erase(sortedPoints.begin());
 
-    //TODO: Conferir por que isto aqui é O(n^3)
     for(auto& point : sortedPoints)
     {
         std::vector<Edge> candidatesEdges = {};
 
-        for(auto& edge : edges)
+        Point projectedPoint = Point(point.x + 1, point.y);
+
+        Edge superiorEdge;
+        Edge inferiorEdge;
+
+        double maxAngle = -INFINITY;
+        double minAngle = INFINITY;
+
+        for(auto& usedPoint : usedPoints)
         {
-            Edge e1 = Edge(point, edge.start);
-            Edge e2 = Edge(point, edge.end);
-
-            if(!containsEdge(candidatesEdges, e1)) candidatesEdges.push_back(e1);
-            if(!containsEdge(candidatesEdges, e2)) candidatesEdges.push_back(e2);
-        }
-
-        for(auto& candidateEdge : candidatesEdges)
-        {
-            bool isValid = true;
-
-            for(auto& edge : edges)
+            Angle angle = Angle( Vector(usedPoint, projectedPoint) );
+            double angleVal = angle.unitarySquare();
+            
+            if(angleVal < minAngle)
             {
-                if(candidateEdge != edge && intersect(candidateEdge, edge)) 
-                {
-                    isValid = false;
-                    break;
-                }
+                minAngle = angleVal;
+                superiorEdge = Edge(usedPoint, point);
             }
 
-            if(isValid)
+            if(angleVal > maxAngle)
             {
-                edges.push_back(candidateEdge);
+                maxAngle = angleVal;
+                inferiorEdge = Edge(usedPoint, point);
             }
         }
 
-        Edge lastEdge = edges[edges.size() - 1];
-        Edge prelastEdge = edges[edges.size() - 2];
+        if(maxAngle != -INFINITY) edges.push_back(inferiorEdge);
+        if(minAngle != INFINITY) edges.push_back(superiorEdge);
+        usedPoints.push_back(point);
+
+        // for(auto& edge : edges)
+        // {
+        //     Edge e1 = Edge(point, edge.start);
+        //     Edge e2 = Edge(point, edge.end);
+
+        //     if(!containsEdge(candidatesEdges, e1)) candidatesEdges.push_back(e1);
+        //     if(!containsEdge(candidatesEdges, e2)) candidatesEdges.push_back(e2);
+        // }
+
+        // for(auto& candidateEdge : candidatesEdges)
+        // {
+        //     bool isValid = true;
+
+        //     for(auto& edge : edges)
+        //     {
+        //         if(candidateEdge != edge && intersect(candidateEdge, edge)) 
+        //         {
+        //             isValid = false;
+        //             break;
+        //         }
+        //     }
+
+        //     if(isValid)
+        //     {
+        //         edges.push_back(candidateEdge);
+        //     }
+        // }
+
+        // Edge lastEdge = edges[edges.size() - 1];
+        // Edge prelastEdge = edges[edges.size() - 2];
         
-        Triangle newTriangle = Triangle(prelastEdge.end, lastEdge.end, point);
-        toCW(newTriangle);
+        // Triangle newTriangle = Triangle(prelastEdge.end, lastEdge.end, point);
+        // toCW(newTriangle);
 
-        triangulation.push_back(newTriangle);
+        // triangulation.push_back(newTriangle);
+    }
+
+    for(int i=0; i < edges.size() - 2; i+=2)
+    {
+        Triangle triangle = getTriangle(edges[i], edges[i+1], edges[i+2]);
+        triangulation.push_back(triangle);
     }
 
     return triangulation;
@@ -568,10 +656,16 @@ int main(int argc, char const *argv[])
     printPoints("Points:", points);
     std::cout << "Is point " << p.toString() << " inside?" << std::endl;
     std::cout << (isInside(points, p) ? "Yes!" : "No...") << std::endl;
+
     // std::ofstream q1Out;
     // q1Out.open ("homework4Outputs/question1.tri");
 
     // std::vector<Triangle> triangulation = scanTriangulation(points);
+
+    // for(auto& triangle : triangulation)
+    // {
+    //     std::cout << triangle.toString() << std::endl;
+    // }
 
     // for(auto& point : points)
     // {
