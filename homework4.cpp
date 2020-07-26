@@ -567,42 +567,6 @@ std::vector<Triangle> scanTriangulation(std::vector<Point> points)
         if(maxAngle != -INFINITY) edges.push_back(inferiorEdge);
         if(minAngle != INFINITY) edges.push_back(superiorEdge);
         usedPoints.push_back(point);
-
-        // for(auto& edge : edges)
-        // {
-        //     Edge e1 = Edge(point, edge.start);
-        //     Edge e2 = Edge(point, edge.end);
-
-        //     if(!containsEdge(candidatesEdges, e1)) candidatesEdges.push_back(e1);
-        //     if(!containsEdge(candidatesEdges, e2)) candidatesEdges.push_back(e2);
-        // }
-
-        // for(auto& candidateEdge : candidatesEdges)
-        // {
-        //     bool isValid = true;
-
-        //     for(auto& edge : edges)
-        //     {
-        //         if(candidateEdge != edge && intersect(candidateEdge, edge)) 
-        //         {
-        //             isValid = false;
-        //             break;
-        //         }
-        //     }
-
-        //     if(isValid)
-        //     {
-        //         edges.push_back(candidateEdge);
-        //     }
-        // }
-
-        // Edge lastEdge = edges[edges.size() - 1];
-        // Edge prelastEdge = edges[edges.size() - 2];
-        
-        // Triangle newTriangle = Triangle(prelastEdge.end, lastEdge.end, point);
-        // toCW(newTriangle);
-
-        // triangulation.push_back(newTriangle);
     }
 
     for(int i=0; i < edges.size() - 2; i+=2)
@@ -647,6 +611,181 @@ bool isInside(std::vector<Point> points, Point point)
     return false;
 }
 
+bool contains(std::vector<Point> points, Point point)
+{
+    for(auto& somePoint : points)
+    {
+        if(somePoint == point)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::vector<Point> jarvisHull(std::vector<Point> points)
+{
+    std::vector<Point> sortedPoints = mergeSort(points);
+
+    Point basePoint = sortedPoints[0];
+
+    std::vector<Point> hull = { basePoint };
+
+    Vector rotationAxis = Vector( basePoint, Point(basePoint.x + 1, basePoint.y) );
+
+    Point currentPoint = basePoint;
+
+    do
+    {
+        double minAngle = INFINITY;
+        int selectedIndex = -1;
+
+        for(int i = 0; i < sortedPoints.size(); i++)
+        {
+            if(currentPoint != sortedPoints[i] && ( !contains(hull, sortedPoints[i]) || sortedPoints[i] == basePoint))
+            {
+                Angle currentAngle = Angle( Vector( currentPoint, sortedPoints[i] ), rotationAxis );
+                double pseudoValue = currentAngle.unitarySquare();
+                
+                if(pseudoValue >= 0 && pseudoValue < minAngle)
+                {
+                    minAngle = pseudoValue;
+                    selectedIndex = i;
+                }
+                else if(pseudoValue == minAngle && currentPoint.x < sortedPoints[i].x)
+                {
+                    selectedIndex = i;
+                }
+            }
+        }
+
+        if(selectedIndex >= 0)
+        {
+            if(sortedPoints[selectedIndex] != basePoint)
+            {
+                hull.push_back(sortedPoints[selectedIndex]);
+
+                rotationAxis = Vector( currentPoint, sortedPoints[selectedIndex] );
+            }
+            
+            currentPoint = sortedPoints[selectedIndex];
+        }
+        else
+        {
+            throw "Unable to execute jarvis hull for this set of points. This is probably a bug in code.";
+        }
+    }
+    while(currentPoint != basePoint);
+
+    return hull;
+}
+
+bool contains(std::vector<Edge> edges, Edge edge)
+{
+    for(auto& someEdge : edges)
+    {
+        if(someEdge == edge)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+struct RankedPoint
+{
+    double area;
+    Point point;
+};
+
+bool rankingOrderCondition(RankedPoint a, RankedPoint b) { return (a.area < b.area); }
+
+std::vector<Triangle> frontierAdvance(std::vector<Point> points)
+{
+    if(points.size() < 3) throw "Invalid number of points";
+
+    std::vector<Point> hull = jarvisHull(points);
+
+    std::vector<Edge> edges = {};
+    edges.reserve(3 * points.size());
+
+    std::vector<Triangle> triangulation = {};
+    edges.reserve(3 * points.size());
+
+    for(int i=0; i < hull.size() - 1; i++)
+    {
+        edges.push_back(Edge(points[i], points[i+1]));
+    }
+
+    edges.push_back(Edge(points[points.size()-1], points[0]));
+
+    std::vector<Edge> triangulationEdges = edges;
+
+    while(edges.size() > 0)
+    {
+        Edge edge = edges[0];
+
+        std::vector<RankedPoint> rankedPoints = {};
+
+        for(auto& point : points)
+        {
+            if(point != edge.start && point != edge.end)
+            {
+                Triangle candidateTriangle = Triangle(edge.start, point, edge.end);
+                toCW(candidateTriangle);
+                double area = orientedArea(candidateTriangle);
+
+                if(area >= 0)
+                {
+                    RankedPoint rankedPoint;
+                    rankedPoint.area = area;
+                    rankedPoint.point = point;
+                    rankedPoints.push_back(rankedPoint);
+                }
+            }
+        }
+
+        std::sort(rankedPoints.begin(), rankedPoints.end(), rankingOrderCondition);
+
+        for(auto& rankedPoint : rankedPoints)
+        {
+            bool valid = true;
+
+            Edge e1 = Edge(edge.start, rankedPoint.point);
+            Edge e2 = Edge(rankedPoint.point, edge.end);
+
+            for(auto& someEdge : triangulationEdges)
+            {
+                if(intersect(e1, someEdge) || intersect(e2, someEdge))
+                {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if(valid)
+            {
+                if(!contains(edges, e1)) edges.push_back(e1);
+                if(!contains(edges, e2)) edges.push_back(e2);
+
+                if(!contains(triangulationEdges, e1)) triangulationEdges.push_back(e1);
+                if(!contains(triangulationEdges, e2)) triangulationEdges.push_back(e2);
+
+                Triangle triangle = Triangle(edge.start, rankedPoint.point, edge.end);
+                toCW(triangle);
+                triangulation.push_back(triangle);
+                break;
+            }
+        }
+
+        edges.erase(edges.begin());
+    }
+
+    return triangulation;
+}
+
 int main(int argc, char const *argv[])
 {
     std::vector<Point> points = { Point(1,3), Point(2,5), Point(3,2), Point(4,5), Point(5,3) };
@@ -655,38 +794,64 @@ int main(int argc, char const *argv[])
     std::cout << "Question 1" << std::endl;
     printPoints("Points:", points);
     std::cout << "Is point " << p.toString() << " inside?" << std::endl;
-    std::cout << (isInside(points, p) ? "Yes!" : "No...") << std::endl;
+    std::cout << (isInside(points, p) ? "Yes!" : "No...") << std::endl << std::endl;
 
-    // std::ofstream q1Out;
-    // q1Out.open ("homework4Outputs/question1.tri");
+    std::cout << "Question 5" << std::endl;
 
-    // std::vector<Triangle> triangulation = scanTriangulation(points);
+    std::ofstream scanTriangulationExport;
+    scanTriangulationExport.open ("homework4Outputs/scan-triangulation.tri");
 
-    // for(auto& triangle : triangulation)
-    // {
-    //     std::cout << triangle.toString() << std::endl;
-    // }
+    std::vector<Triangle> ScanTriangulation = scanTriangulation(points);
 
-    // for(auto& point : points)
-    // {
-    //     q1Out << point.toFile() << "\n";
-    // }
+    for(auto& point : points)
+    {
+        scanTriangulationExport << point.toFile() << "\n";
+    }
 
-    // for(auto& triangle : triangulation)
-    // {
-    //     int p1Index = -1;
-    //     int p2Index = -1;
-    //     int p3Index = -1;
+    for(auto& triangle : ScanTriangulation)
+    {
+        int p1Index = -1;
+        int p2Index = -1;
+        int p3Index = -1;
 
-    //     for(int i=0; i < points.size(); i++)
-    //     {
-    //         if(triangle.p1 == points[i]) p1Index = i;
-    //         if(triangle.p2 == points[i]) p2Index = i;
-    //         if(triangle.p3 == points[i]) p3Index = i;
-    //     }
+        for(int i=0; i < points.size(); i++)
+        {
+            if(triangle.p1 == points[i]) p1Index = i;
+            if(triangle.p2 == points[i]) p2Index = i;
+            if(triangle.p3 == points[i]) p3Index = i;
+        }
 
-    //     q1Out << "t " << p1Index << " " << p2Index << " " << p3Index << "\n";
-    // }
+        scanTriangulationExport << "t " << p1Index << " " << p2Index << " " << p3Index << "\n";
+    }
 
-    // q1Out.close();
+    scanTriangulationExport.close();
+
+
+    std::ofstream frontierAdvanceExport;
+    frontierAdvanceExport.open ("homework4Outputs/frontier-advance.tri");
+
+    std::vector<Triangle> frontierAdvanceTriangulation = frontierAdvance(points);
+
+    for(auto& point : points)
+    {
+        frontierAdvanceExport << point.toFile() << "\n";
+    }
+
+    for(auto& triangle : frontierAdvanceTriangulation)
+    {
+        int p1Index = -1;
+        int p2Index = -1;
+        int p3Index = -1;
+
+        for(int i=0; i < points.size(); i++)
+        {
+            if(triangle.p1 == points[i]) p1Index = i;
+            if(triangle.p2 == points[i]) p2Index = i;
+            if(triangle.p3 == points[i]) p3Index = i;
+        }
+
+        frontierAdvanceExport << "t " << p1Index << " " << p2Index << " " << p3Index << "\n";
+    }
+
+    frontierAdvanceExport.close();
 }
