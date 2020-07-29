@@ -126,6 +126,22 @@ class Triangle
             out.append(" ]");
             return out;
         }
+
+        bool operator==(Triangle& face)
+        {
+            return face.p1 != face.p2 && face.p2 != face.p3 && face.p3 != face.p1 &&
+            ( face.p1 == p1 || face.p2 == p1 || face.p3 == p1) && 
+            ( face.p1 == p2 || face.p2 == p2 || face.p3 == p2) && 
+            ( face.p1 == p3 || face.p2 == p3 || face.p3 == p3);
+        }
+
+        bool operator!=(Triangle& face)
+        {
+            return !(face.p1 != face.p2 && face.p2 != face.p3 && face.p3 != face.p1 &&
+            ( face.p1 == p1 || face.p2 == p1 || face.p3 == p1) && 
+            ( face.p1 == p2 || face.p2 == p2 || face.p3 == p2) && 
+            ( face.p1 == p3 || face.p2 == p3 || face.p3 == p3));
+        }
 };
 
 double dot(Vector v1, Vector v2)
@@ -471,16 +487,6 @@ bool intersect(Edge e1, Edge e2)
     return s1_ok && s2_ok;
 }
 
-bool containsEdge(std::vector<Edge> edges, Edge edge)
-{
-    for(auto& someEdge : edges)
-    {
-        if(edge == someEdge) return true;
-    }
-
-    return false;
-}
-
 Triangle getTriangle(Edge e1, Edge e2, Edge e3)
 {
     std::vector<Point> points = { e1.start, e1.end, e2.start, e2.end, e3.start, e3.end };
@@ -694,6 +700,19 @@ bool contains(std::vector<Edge> edges, Edge edge)
     return false;
 }
 
+bool contains(std::vector<Triangle> faces, Triangle face)
+{
+    for(auto& someFace : faces)
+    {
+        if(someFace == face)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 struct RankedPoint
 {
     double area;
@@ -712,7 +731,7 @@ std::vector<Triangle> frontierAdvance(std::vector<Point> points)
     edges.reserve(3 * points.size());
 
     std::vector<Triangle> triangulation = {};
-    edges.reserve(3 * points.size());
+    triangulation.reserve(3 * points.size());
 
     for(int i=0; i < hull.size() - 1; i++)
     {
@@ -786,6 +805,109 @@ std::vector<Triangle> frontierAdvance(std::vector<Point> points)
     return triangulation;
 }
 
+Triangle newFace(Triangle face, Edge edge, std::vector<Point> points)
+{
+    double maxAngle = -INFINITY;
+    Point choosenPoint;
+
+    for(auto& point : points)
+    {
+        if(point != face.p1 && point != face.p2 && point != face.p3)
+        {
+            Angle angle = Angle( sub(edge.start, point), sub(edge.end, point) );
+            double angleVal = angle.unitarySquare();
+
+            if(angleVal > maxAngle)
+            {
+                maxAngle = angleVal;
+                choosenPoint = point;
+            }
+        }
+    }
+
+    Triangle createdFace = Triangle(edge.start, choosenPoint, edge.end);
+    return createdFace;
+}
+
+std::vector<Triangle> delaunay(std::vector<Point> points)
+{
+    std::vector<Point> sortedPoints = mergeSort(points);
+
+    Triangle initialTriangle = Triangle();
+    initialTriangle.p1 = sortedPoints[0];
+
+    double minLen = INFINITY;
+
+    for(auto& point : sortedPoints)
+    {
+        if(point != initialTriangle.p1)
+        {
+            double currLen = sqrLen(sub(point, initialTriangle.p1));
+            if(currLen < minLen)
+            {
+                minLen = currLen;
+                initialTriangle.p2 = point;
+            }
+        }
+    }
+
+    minLen = INFINITY;
+
+    for(auto& point : sortedPoints)
+    {
+        if(point != initialTriangle.p1 && point != initialTriangle.p2)
+        {
+            double currLen = sqrLen(sub(point, initialTriangle.p2));
+            if(currLen < minLen)
+            {
+                minLen = currLen;
+                initialTriangle.p3 = point;
+            }
+        }
+    }
+
+    std::vector<Triangle> triangulation = {};
+    triangulation.reserve(3 * points.size());
+
+    std::vector<Triangle> faces = {};
+    faces.reserve(3 * points.size());
+
+    triangulation.push_back(initialTriangle);
+    faces.push_back(initialTriangle);
+
+    while(faces.size() > 0)
+    {
+        Triangle currFace = faces.back();
+        faces.pop_back();
+
+        Triangle f1 = newFace(currFace, Edge(currFace.p1, currFace.p2), sortedPoints);
+
+        if(!contains(triangulation, f1)) 
+        {
+            triangulation.push_back(f1);
+            if(!contains(faces, f1)) faces.push_back(f1);
+        }
+
+        Triangle f2 = newFace(currFace, Edge(currFace.p2, currFace.p3), sortedPoints);
+
+        if(!contains(triangulation, f2)) 
+        {
+            triangulation.push_back(f2);
+            if(!contains(faces, f2)) faces.push_back(f2);
+        }
+
+        Triangle f3 = newFace(currFace, Edge(currFace.p3, currFace.p1), sortedPoints);
+
+        if(!contains(triangulation, f3)) 
+        {
+            triangulation.push_back(f3);
+            if(!contains(faces, f3)) faces.push_back(f3);
+        }
+    }
+
+    return triangulation;
+}
+
 int main(int argc, char const *argv[])
 {
     std::vector<Point> points = { Point(1,3), Point(2,5), Point(3,2), Point(4,5), Point(5,3) };
@@ -795,6 +917,36 @@ int main(int argc, char const *argv[])
     printPoints("Points:", points);
     std::cout << "Is point " << p.toString() << " inside?" << std::endl;
     std::cout << (isInside(points, p) ? "Yes!" : "No...") << std::endl << std::endl;
+
+    std::cout << "Question 4" << std::endl;
+
+    std::ofstream delaunayExport;
+    delaunayExport.open ("homework4Outputs/delaunay.tri");
+
+    std::vector<Triangle> delaunayTriangulation = delaunay(points);
+
+    for(auto& point : points)
+    {
+        delaunayExport << point.toFile() << "\n";
+    }
+
+    for(auto& triangle : delaunayTriangulation)
+    {
+        int p1Index = -1;
+        int p2Index = -1;
+        int p3Index = -1;
+
+        for(int i=0; i < points.size(); i++)
+        {
+            if(triangle.p1 == points[i]) p1Index = i;
+            if(triangle.p2 == points[i]) p2Index = i;
+            if(triangle.p3 == points[i]) p3Index = i;
+        }
+
+        delaunayExport << "t " << p1Index << " " << p2Index << " " << p3Index << "\n";
+    }
+
+    delaunayExport.close();
 
     std::cout << "Question 5" << std::endl;
 
